@@ -49,6 +49,16 @@ export type TwygoContent = {
   link: string;
   categories: { category_id: number; name: string }[];
   learning_experience: { name: string };
+  activities?: { activity_id: number; activity_type: string; situation: string }[];
+};
+
+export type TwygoActivityAttendee = {
+  activity_attendee_id: number;
+  user_id: number;
+  content_id: number;
+  activity_id: number;
+  started_at: string | null;
+  concluded_at: string | null;
 };
 
 export type TwygoUser = {
@@ -105,8 +115,96 @@ export function listAttendees(params?: Record<string, string>) {
   return twygoFetch<unknown>("/attendees", params);
 }
 
-export function listActivitiesAttendees(params?: Record<string, string>) {
-  return twygoFetch<unknown>("/activities_attendees", params);
+export function listActivitiesAttendeesPage(params?: Record<string, string>) {
+  return twygoFetch<{
+    data: { pagination: Pagination; activities_attendees: TwygoActivityAttendee[] };
+  }>("/activities_attendees", params);
+}
+
+export async function listAllActivitiesAttendees(): Promise<TwygoActivityAttendee[]> {
+  const first = await listActivitiesAttendeesPage({ per_page: "100", page: "1" });
+  const all = [...first.data.activities_attendees];
+  const totalPages = first.data.pagination.total_pages;
+
+  for (let page = 2; page <= totalPages; page++) {
+    const next = await listActivitiesAttendeesPage({ per_page: "100", page: String(page) });
+    all.push(...next.data.activities_attendees);
+  }
+
+  return all;
+}
+
+export function parseHoursToDecimal(hours: string): number {
+  const [h, m, s] = hours.split(":").map(Number);
+  if ([h, m, s].some((n) => Number.isNaN(n))) return 0;
+  return h + m / 60 + s / 3600;
+}
+
+export type ExecutiveOverview = {
+  totalCourses: number;
+  totalTrilhas: number;
+  totalPacotes: number;
+  totalHoursAvailable: number;
+  totalUsers: number;
+  completionRate: number;
+  neverWatchedCourses: number;
+  trilhaEngagement: { name: string; pct: number }[];
+};
+
+export async function getExecutiveOverview(): Promise<ExecutiveOverview> {
+  const [contents, users, activitiesAttendees] = await Promise.all([
+    listAllContents(),
+    listAllUsers(),
+    listAllActivitiesAttendees(),
+  ]);
+
+  const courses = contents.filter((c) => c.content_type === "course");
+  const trilhas = contents.filter((c) => c.content_type === "learning_path");
+  const pacotes = contents.filter((c) => c.content_type === "package");
+
+  const totalHoursAvailable = courses.reduce(
+    (sum, c) => sum + parseHoursToDecimal(c.hours),
+    0
+  );
+
+  const completionRate =
+    activitiesAttendees.length === 0
+      ? 0
+      : activitiesAttendees.filter((a) => a.concluded_at).length /
+        activitiesAttendees.length;
+
+  const contentIdsWithActivity = new Set(activitiesAttendees.map((a) => a.content_id));
+  const neverWatchedCourses = courses.filter(
+    (c) => !contentIdsWithActivity.has(c.content_id)
+  ).length;
+
+  // Em trilhas/pacotes, `activities[].activity_id` é, na prática, o
+  // content_id dos cursos que compõem a trilha (não o activity_id de
+  // rastreamento individual usado em /activities_attendees).
+  const concludedContentIds = new Set(
+    activitiesAttendees.filter((a) => a.concluded_at).map((a) => a.content_id)
+  );
+
+  const trilhaEngagement = trilhas
+    .map((t) => {
+      const courseIds = t.activities?.map((a) => a.activity_id) ?? [];
+      if (courseIds.length === 0) return { name: t.name, pct: 0 };
+      const concludedCount = courseIds.filter((id) => concludedContentIds.has(id)).length;
+      return { name: t.name, pct: Math.round((concludedCount / courseIds.length) * 100) };
+    })
+    .sort((a, b) => b.pct - a.pct)
+    .slice(0, 5);
+
+  return {
+    totalCourses: courses.length,
+    totalTrilhas: trilhas.length,
+    totalPacotes: pacotes.length,
+    totalHoursAvailable: Math.round(totalHoursAvailable),
+    totalUsers: users.length,
+    completionRate: Math.round(completionRate * 100),
+    neverWatchedCourses,
+    trilhaEngagement,
+  };
 }
 
 export function listQuestionnaires(params?: Record<string, string>) {

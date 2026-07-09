@@ -10,6 +10,12 @@
   --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+
+  --color-selbetti-green-dark: #0d3f30;
+  --color-selbetti-green: #1a7254;
+  --color-selbetti-green-light: #60ba63;
+  --color-selbetti-orange: #f5811f;
+  --color-selbetti-orange-light: #f7c4a1;
 }
 
 @media (prefers-color-scheme: dark) {
