@@ -48,6 +48,66 @@ export default async function Home() {
       </header>
 
       <main className="max-w-6xl mx-auto p-8">
+        <section className="mb-6">
+          <h2 className="text-sm font-semibold text-zinc-900 dark:text-zinc-50 mb-3">
+            Licenças
+          </h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
+            <StatCard
+              label="Licenças contratadas"
+              value={overview.licenses.contracted}
+            />
+            <StatCard label="Licenças consumidas" value={overview.licenses.used} />
+            <StatCard
+              label="Licenças disponíveis"
+              value={overview.licenses.available}
+            />
+          </div>
+
+          <div className="rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-6">
+            <div className="flex justify-between text-sm mb-2">
+              <span className="text-zinc-700 dark:text-zinc-300">
+                Uso interno (Selbetti) vs. externo
+              </span>
+              <span className="text-zinc-500 dark:text-zinc-400">
+                {overview.licenses.used} consumidas
+              </span>
+            </div>
+            <div className="h-3 rounded-full bg-zinc-100 dark:bg-zinc-800 overflow-hidden flex">
+              <div
+                className="h-full bg-selbetti-green"
+                style={{
+                  width: `${
+                    overview.licenses.used
+                      ? (overview.licenses.internal / overview.licenses.used) * 100
+                      : 0
+                  }%`,
+                }}
+              />
+              <div
+                className="h-full bg-selbetti-orange"
+                style={{
+                  width: `${
+                    overview.licenses.used
+                      ? (overview.licenses.external / overview.licenses.used) * 100
+                      : 0
+                  }%`,
+                }}
+              />
+            </div>
+            <div className="flex gap-6 mt-3 text-sm">
+              <span className="flex items-center gap-2 text-zinc-600 dark:text-zinc-400">
+                <span className="h-2.5 w-2.5 rounded-full bg-selbetti-green" />
+                Interno (Selbetti): {overview.licenses.internal}
+              </span>
+              <span className="flex items-center gap-2 text-zinc-600 dark:text-zinc-400">
+                <span className="h-2.5 w-2.5 rounded-full bg-selbetti-orange" />
+                Externo (clientes): {overview.licenses.external}
+              </span>
+            </div>
+          </div>
+        </section>
+
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
           <StatCard label="Cursos cadastrados" value={overview.totalCourses} />
           <StatCard

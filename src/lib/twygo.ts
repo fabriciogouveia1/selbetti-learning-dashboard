@@ -149,7 +149,16 @@ export type ExecutiveOverview = {
   completionRate: number;
   neverWatchedCourses: number;
   trilhaEngagement: { name: string; pct: number }[];
+  licenses: {
+    contracted: number;
+    used: number;
+    available: number;
+    internal: number;
+    external: number;
+  };
 };
+
+const INTERNAL_EMAIL_DOMAIN = "@selbetti.com.br";
 
 export async function getExecutiveOverview(): Promise<ExecutiveOverview> {
   const [contents, users, activitiesAttendees] = await Promise.all([
@@ -195,6 +204,13 @@ export async function getExecutiveOverview(): Promise<ExecutiveOverview> {
     .sort((a, b) => b.pct - a.pct)
     .slice(0, 5);
 
+  const activeUsers = users.filter((u) => u.situation === "active");
+  const internalUsers = activeUsers.filter((u) =>
+    u.email.toLowerCase().endsWith(INTERNAL_EMAIL_DOMAIN)
+  );
+  const licensesUsed = activeUsers.length;
+  const licensesContracted = Number(process.env.TOTAL_LICENSES_CONTRACTED ?? 0);
+
   return {
     totalCourses: courses.length,
     totalTrilhas: trilhas.length,
@@ -204,6 +220,13 @@ export async function getExecutiveOverview(): Promise<ExecutiveOverview> {
     completionRate: Math.round(completionRate * 100),
     neverWatchedCourses,
     trilhaEngagement,
+    licenses: {
+      contracted: licensesContracted,
+      used: licensesUsed,
+      available: Math.max(licensesContracted - licensesUsed, 0),
+      internal: internalUsers.length,
+      external: licensesUsed - internalUsers.length,
+    },
   };
 }
 
