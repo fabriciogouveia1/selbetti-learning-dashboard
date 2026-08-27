@@ -67,6 +67,7 @@ export type TwygoUser = {
   email: string;
   situation?: string;
   is_manager?: boolean;
+  enterprise?: string | null;
   department?: string | null;
   created_at?: string;
 };
@@ -158,7 +159,7 @@ export type ExecutiveOverview = {
   };
 };
 
-const INTERNAL_EMAIL_DOMAIN = "@selbetti.com.br";
+const INTERNAL_ENTERPRISE_NAME = "selbetti";
 
 export async function getExecutiveOverview(): Promise<ExecutiveOverview> {
   const [contents, users, activitiesAttendees] = await Promise.all([
@@ -205,8 +206,8 @@ export async function getExecutiveOverview(): Promise<ExecutiveOverview> {
     .slice(0, 5);
 
   const activeUsers = users.filter((u) => u.situation === "active");
-  const internalUsers = activeUsers.filter((u) =>
-    u.email.toLowerCase().endsWith(INTERNAL_EMAIL_DOMAIN)
+  const internalUsers = activeUsers.filter(
+    (u) => u.enterprise?.trim().toLowerCase() === INTERNAL_ENTERPRISE_NAME
   );
   const licensesUsed = activeUsers.length;
   const licensesContracted = Number(process.env.TOTAL_LICENSES_CONTRACTED ?? 0);
@@ -228,6 +229,43 @@ export async function getExecutiveOverview(): Promise<ExecutiveOverview> {
       external: licensesUsed - internalUsers.length,
     },
   };
+}
+
+export type CompanyOverview = {
+  name: string;
+  totalUsers: number;
+  activeUsers: number;
+  inactiveUsers: number;
+  isInternal: boolean;
+};
+
+function companyNameFor(user: TwygoUser): string {
+  const enterprise = user.enterprise?.trim();
+  if (enterprise) return enterprise;
+  const domain = user.email.split("@")[1];
+  return domain ? `Sem empresa (${domain})` : "Sem empresa";
+}
+
+export async function getCompaniesOverview(): Promise<CompanyOverview[]> {
+  const users = await listAllUsers();
+
+  const byCompany = new Map<string, TwygoUser[]>();
+  for (const user of users) {
+    const name = companyNameFor(user);
+    const list = byCompany.get(name) ?? [];
+    list.push(user);
+    byCompany.set(name, list);
+  }
+
+  return Array.from(byCompany.entries())
+    .map(([name, companyUsers]) => ({
+      name,
+      totalUsers: companyUsers.length,
+      activeUsers: companyUsers.filter((u) => u.situation === "active").length,
+      inactiveUsers: companyUsers.filter((u) => u.situation !== "active").length,
+      isInternal: name.trim().toLowerCase() === INTERNAL_ENTERPRISE_NAME,
+    }))
+    .sort((a, b) => b.totalUsers - a.totalUsers);
 }
 
 export function listQuestionnaires(params?: Record<string, string>) {

@@ -1,51 +1,20 @@
 import Link from "next/link";
 import { getExecutiveOverview } from "@/lib/twygo";
+import { DashboardHeader } from "@/components/dashboard-header";
+import { StatCard } from "@/components/stat-card";
 
 export const dynamic = "force-dynamic";
-
-const OTHER_TABS = [
-  "Catálogo & Pacotes",
-  "Gestão de Planos",
-  "Usuários & Empresas",
-  "Alertas",
-  "Automação",
-];
 
 export default async function Home() {
   const overview = await getExecutiveOverview();
 
   return (
     <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950">
-      <header className="relative overflow-hidden bg-gradient-to-br from-selbetti-green-dark via-selbetti-green to-selbetti-green-dark px-8 py-10">
-        <div className="relative max-w-6xl">
-          <span className="inline-flex items-center rounded-full bg-white/10 px-3 py-1 text-xs font-medium text-white/90 backdrop-blur">
-            Selbetti Learning · Dashboard
-          </span>
-          <h1 className="mt-4 text-2xl sm:text-3xl font-semibold text-white max-w-2xl leading-snug">
-            Visão executiva para acompanhar cursos, trilhas, usuários e
-            engajamento
-          </h1>
-          <p className="mt-2 text-sm text-white/70 max-w-xl">
-            Dados em tempo real da Twygo — atualizado a cada carregamento da
-            página.
-          </p>
-
-          <nav className="mt-6 flex flex-wrap gap-2">
-            <span className="rounded-full bg-selbetti-orange px-4 py-1.5 text-sm font-medium text-white">
-              Visão Executiva
-            </span>
-            {OTHER_TABS.map((tab) => (
-              <span
-                key={tab}
-                title="Em breve"
-                className="rounded-full bg-white/10 px-4 py-1.5 text-sm font-medium text-white/50 cursor-not-allowed"
-              >
-                {tab}
-              </span>
-            ))}
-          </nav>
-        </div>
-      </header>
+      <DashboardHeader
+        active="/"
+        title="Visão executiva para acompanhar cursos, trilhas, usuários e engajamento"
+        subtitle="Dados em tempo real da Twygo — atualizado a cada carregamento da página."
+      />
 
       <main className="max-w-6xl mx-auto p-8">
         <section className="mb-6">
@@ -189,28 +158,6 @@ export default async function Home() {
           </div>
         </div>
       </main>
-    </div>
-  );
-}
-
-function StatCard({
-  label,
-  value,
-  hint,
-}: {
-  label: string;
-  value: string | number;
-  hint?: string;
-}) {
-  return (
-    <div className="rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-6">
-      <p className="text-sm text-zinc-500 dark:text-zinc-400">{label}</p>
-      <p className="text-3xl font-semibold text-zinc-900 dark:text-zinc-50 mt-1">
-        {typeof value === "number" ? value.toLocaleString("pt-BR") : value}
-      </p>
-      {hint && (
-        <p className="text-xs text-zinc-400 dark:text-zinc-500 mt-1">{hint}</p>
-      )}
     </div>
   );
 }
