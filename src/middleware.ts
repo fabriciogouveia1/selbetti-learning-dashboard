@@ -6,6 +6,7 @@ export function middleware(request: NextRequest) {
   if (
     pathname === "/login" ||
     pathname === "/api/login" ||
+    pathname.startsWith("/api/cron/") ||
     pathname.startsWith("/_next") ||
     pathname === "/favicon.ico"
   ) {

@@ -2,6 +2,7 @@ import Link from "next/link";
 
 const TABS = [
   { href: "/", label: "Visão Executiva" },
+  { href: "/status", label: "Status Semanal" },
   { href: "/usuarios", label: "Usuários & Empresas" },
 ];
 
