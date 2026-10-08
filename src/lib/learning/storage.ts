@@ -9,7 +9,8 @@ const BLOB_ACCESS = (process.env.BLOB_ACCESS === "public" ? "public" : "private"
   | "public"
   | "private";
 
-const useBlob = () => !!process.env.BLOB_READ_WRITE_TOKEN;
+// Na Vercel o Store pode vir por token (BLOB_READ_WRITE_TOKEN) ou por OIDC (BLOB_STORE_ID).
+const useBlob = () => !!(process.env.BLOB_READ_WRITE_TOKEN || process.env.BLOB_STORE_ID);
 
 export function storageMode(): "blob" | "local" {
   return useBlob() ? "blob" : "local";
